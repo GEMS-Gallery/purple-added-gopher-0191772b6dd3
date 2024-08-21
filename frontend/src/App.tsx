@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { backend } from 'declarations/backend';
 import { styled } from '@mui/material/styles';
-import { Box, Typography, TextField, Button } from '@mui/material';
+import { Box, Typography, TextField, Button, Card, CardContent, Grid } from '@mui/material';
 
 const Terminal = styled(Box)(({ theme }) => ({
   backgroundColor: '#000',
   color: '#00FF00',
   fontFamily: '"VT323", monospace',
   padding: theme.spacing(2),
-  height: '100vh',
+  minHeight: '100vh',
   overflowY: 'auto',
 }));
 
@@ -25,6 +25,16 @@ const InputField = styled(TextField)({
   },
   '& .MuiInput-underline:before': {
     borderBottomColor: '#00FF00',
+  },
+});
+
+const CategoryCard = styled(Card)({
+  backgroundColor: '#111',
+  color: '#00FF00',
+  border: '1px solid #00FF00',
+  cursor: 'pointer',
+  '&:hover': {
+    backgroundColor: '#222',
   },
 });
 
@@ -57,47 +67,41 @@ const App: React.FC = () => {
     setReplies(result);
   };
 
-  const handleInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const command = input.trim().toLowerCase();
-      setInput('');
+  const handleCategoryClick = (category: string) => {
+    setCurrentCategory(category);
+    setCurrentView('topics');
+    fetchTopics(category);
+  };
 
-      if (currentView === 'categories') {
-        const category = categories.find(c => c.toLowerCase() === command);
-        if (category) {
-          setCurrentCategory(category);
-          setCurrentView('topics');
-          await fetchTopics(category);
-        }
-      } else if (currentView === 'topics') {
-        if (command === 'back') {
-          setCurrentView('categories');
-          setCurrentCategory('');
-        } else if (command.startsWith('view ')) {
-          const topicId = parseInt(command.split(' ')[1]);
-          const topic = topics.find(t => t.id === topicId);
-          if (topic) {
-            setCurrentTopic(topicId);
-            setCurrentView('replies');
-            await fetchReplies(topicId);
-          }
-        } else if (command.startsWith('add ')) {
-          const title = command.substring(4);
-          await backend.addTopic(currentCategory, title, 'New topic content');
-          await fetchTopics(currentCategory);
-        }
-      } else if (currentView === 'replies') {
-        if (command === 'back') {
-          setCurrentView('topics');
-          setCurrentTopic(null);
-        } else if (command.startsWith('reply ')) {
-          const content = command.substring(6);
-          if (currentTopic !== null) {
-            await backend.addReply(currentTopic, content);
-            await fetchReplies(currentTopic);
-          }
-        }
-      }
+  const handleTopicClick = (topicId: number) => {
+    setCurrentTopic(topicId);
+    setCurrentView('replies');
+    fetchReplies(topicId);
+  };
+
+  const handleBack = () => {
+    if (currentView === 'topics') {
+      setCurrentView('categories');
+      setCurrentCategory('');
+    } else if (currentView === 'replies') {
+      setCurrentView('topics');
+      setCurrentTopic(null);
+    }
+  };
+
+  const handleCreateTopic = async () => {
+    if (input.trim() && currentCategory) {
+      await backend.addTopic(currentCategory, input, 'New topic content');
+      setInput('');
+      await fetchTopics(currentCategory);
+    }
+  };
+
+  const handleCreateReply = async () => {
+    if (input.trim() && currentTopic !== null) {
+      await backend.addReply(currentTopic, input);
+      setInput('');
+      await fetchReplies(currentTopic);
     }
   };
 
@@ -107,41 +111,58 @@ const App: React.FC = () => {
         Hacker's Terminal
       </Typography>
       {currentView === 'categories' && (
-        <>
-          <Typography>Available categories:</Typography>
+        <Grid container spacing={2}>
           {categories.map((category, index) => (
-            <Typography key={index} className="category">{category}</Typography>
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <CategoryCard onClick={() => handleCategoryClick(category)}>
+                <CardContent>
+                  <Typography variant="h6">{category}</Typography>
+                </CardContent>
+              </CategoryCard>
+            </Grid>
           ))}
-        </>
+        </Grid>
       )}
       {currentView === 'topics' && (
         <>
-          <Typography>Topics in {currentCategory}:</Typography>
+          <Button onClick={handleBack}>Back</Button>
+          <Typography variant="h5">Topics in {currentCategory}:</Typography>
           {topics.map((topic, index) => (
-            <Typography key={index} className="topic">{topic.id}: {topic.title}</Typography>
+            <Typography key={index} className="topic" onClick={() => handleTopicClick(topic.id)}>
+              {topic.id}: {topic.title}
+            </Typography>
           ))}
-          <Typography>Commands: 'back', 'view [id]', 'add [title]'</Typography>
+          <Box mt={2}>
+            <InputField
+              fullWidth
+              variant="standard"
+              placeholder="Create new topic"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <Button onClick={handleCreateTopic}>Create Topic</Button>
+          </Box>
         </>
       )}
       {currentView === 'replies' && (
         <>
-          <Typography>Replies:</Typography>
+          <Button onClick={handleBack}>Back</Button>
+          <Typography variant="h5">Replies:</Typography>
           {replies.map((reply, index) => (
             <Typography key={index} className="reply">{reply.content}</Typography>
           ))}
-          <Typography>Commands: 'back', 'reply [content]'</Typography>
+          <Box mt={2}>
+            <InputField
+              fullWidth
+              variant="standard"
+              placeholder="Add a reply"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <Button onClick={handleCreateReply}>Add Reply</Button>
+          </Box>
         </>
       )}
-      <Box display="flex" alignItems="center" mt={2}>
-        <PromptText>$</PromptText>
-        <InputField
-          fullWidth
-          variant="standard"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleInput}
-        />
-      </Box>
     </Terminal>
   );
 };
