@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'VT323', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #000;
+  color: #00FF00;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.input-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.prompt {
+  margin-right: 10px;
+}
+
+input[type="text"] {
+  background-color: transparent;
+  border: none;
+  color: #00FF00;
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  flex: 1;
+}
+
+input[type="text"]:focus {
+  outline: none;
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.category, .topic, .reply {
+  margin-bottom: 10px;
+}
+
+.category::before {
+  content: "[CATEGORY] ";
+  color: #FFB000;
+}
+
+.topic::before {
+  content: "[TOPIC] ";
+  color: #FF00FF;
+}
+
+.reply::before {
+  content: "[REPLY] ";
+  color: #00FFFF;
+}

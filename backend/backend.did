@@ -1,0 +1,35 @@
+type TopicId = nat;
+type Topic = 
+ record {
+   category: text;
+   content: text;
+   id: TopicId;
+   timestamp: Time;
+   title: text;
+ };
+type Time = int;
+type Result_1 = 
+ variant {
+   err: text;
+   ok: ReplyId;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: TopicId;
+ };
+type ReplyId = nat;
+type Reply = 
+ record {
+   content: text;
+   id: ReplyId;
+   timestamp: Time;
+   topicId: TopicId;
+ };
+service : {
+  addReply: (TopicId, text) -> (Result_1);
+  addTopic: (text, text, text) -> (Result);
+  getCategories: () -> (vec text) query;
+  getReplies: (TopicId) -> (vec Reply) query;
+  getTopics: (text) -> (vec Topic) query;
+}
